@@ -55,7 +55,9 @@ int main() {
     
     // Set SM mask
     // uint64_t mask = 1ull;
-    setup_sm_control_11();
+    // Print TMD struct field
+    print_tmd_fields(544);
+
     // Partition the L1 cache to allocate the desired amount of shared memory
     int carveout = (int) 100.0 * PERCENTAGE_SHARED;
     SAFE(cudaFuncSetAttribute(vecAdd, cudaFuncAttributePreferredSharedMemoryCarveout, carveout));

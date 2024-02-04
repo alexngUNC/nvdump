@@ -9,7 +9,6 @@
 
 #include <dlfcn.h>
 
-#include "libsmctrl.h"
 // In functions that do not return an error code, we favor terminating with an
 // error rather than merely printing a warning and continuing.
 #define abort(ret, errno, ...) error_at_line(ret, errno, __FILE__, __LINE__, \
@@ -18,6 +17,10 @@
 static const CUuuid callback_funcs_id = {0x2c, (char)0x8e, 0x0a, (char)0xd8, 0x07, 0x10, (char)0xab, 0x4e, (char)0x90, (char)0xdd, 0x54, 0x71, (char)0x9f, (char)0xe5, (char)0xf7, 0x4b};
 #define LAUNCH_DOMAIN 0x3
 #define LAUNCH_PRE_UPLOAD 0x3
+
+// Global bit index into TMD struct
+uint64_t g_bit_index;
+
 static void launchCallback(void *ukwn, int domain, int cbid, const void *in_params) {
     // The third 8-byte element in `in_parms` is a pointer to the stream struct.
     // This exists even when in_params < 0x50. This could be used to implement
@@ -58,7 +61,7 @@ static void launchCallback(void *ukwn, int domain, int cbid, const void *in_para
     uint64_t* my_ptr = &a;
 
     // Specify address of target
-    int target = 544;
+    int target = g_bit_index;
 
     // Specify number of bits that target is
     int length = 18;
@@ -147,7 +150,12 @@ static void launchCallback(void *ukwn, int domain, int cbid, const void *in_para
     fprintf(stdout, "target_addr: %p\t*target_addr: %lx\n", target_addr, *target_addr);
     fprintf(stdout, "Modified value: %lu\n", *my_ptr);
 }
-static void setup_sm_control_11() {
+
+void set_bit_index(uint64_t bit_index) {
+    g_bit_index = bit_index;
+}
+
+static void print_tmd_fields(uint64_t bit_index) {
     int (*subscribe)(uint32_t* hndl, void(*callback)(void*, int, int, const void*), void* ukwn);
     int (*enable)(uint32_t enable, uint32_t hndl, int domain, int cbid);
     uintptr_t* tbl_base;
@@ -155,6 +163,8 @@ static void setup_sm_control_11() {
     // Avoid race conditions (setup can only be called once)
     //if (__atomic_test_and_set(&sm_control_setup_called, __ATOMIC_SEQ_CST))
     //    return;
+    // Set the global bit index
+    set_bit_index(bit_index);
 
     cuGetExportTable((const void**)&tbl_base, &callback_funcs_id);
     uintptr_t subscribe_func_addr = *(tbl_base + 3);
