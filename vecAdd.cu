@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <sys/wait.h>
-#include "test.h"
 #include "testbench.h"
+#include "tmd.h"
 #include <unistd.h>
 #define PERCENTAGE_SHARED 1
 
