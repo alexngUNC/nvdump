@@ -11,19 +11,26 @@ main(void)
 {
     // User will input their bit index
     uint64_t userValue;
+    uint64_t fieldSize;
 
     // Prompt the user for input
-    printf("Enter a 64-bit unsigned integer: ");
+    printf("Enter TMD field starting bit number: ");
 
-    // Use scanf to read the input
+    // Read user input
     if (scanf("%" SCNu64, &userValue) != 1) {
-        // Handle invalid input
         printf("Invalid input. Please enter a valid 64-bit unsigned integer.\n");
         return 1;
     }
 
+    printf("Enter TMD field size in bits: ");
+    
+    if (scanf("%" SCNu64, &fieldSize) != 1) {
+        printf("Invalid input. Please enter a valid 64-bit unsigned integer.\n");
+        return 1;
+    } 
+
     // Print TMD field
-    print_tmd_field(userValue);
+    print_tmd_field(userValue, fieldSize);
     trigger_callback<<<1,1>>>();
 
     return 0;
