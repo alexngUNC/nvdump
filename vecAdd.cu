@@ -1,7 +1,9 @@
 #include <stdio.h>
+#include <sys/wait.h>
 #include "test.h"
 #include "testbench.h"
-#define PERCENTAGE_SHARED 0.5
+#include <unistd.h>
+#define PERCENTAGE_SHARED 1
 
 
 __global__ void vecAdd(int* x, int* y, int n) {
@@ -53,10 +55,26 @@ int main() {
     SAFE(cudaMemcpy(d_x, h_x, sizeof(int)*n, cudaMemcpyHostToDevice));
     SAFE(cudaMemcpy(d_y, h_y, sizeof(int)*n, cudaMemcpyHostToDevice));
     
-    // Set SM mask
-    // uint64_t mask = 1ull;
     // Print TMD struct field
-    print_tmd_field(544);
+    pid_t child_pid;
+
+    // Fork the process
+    if ((child_pid = fork()) == -1) {
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+
+    if (child_pid == 0) {
+        // Execute the child TMD printing process
+        if (execvp("./start", NULL) == -1) {
+            perror("execvp");
+            exit(EXIT_FAILURE);
+        }
+        exit(EXIT_SUCCESS);
+    } else {
+        // Wait for the TMD print process to complete
+        waitpid(child_pid, NULL, 0);
+    }
 
     // Partition the L1 cache to allocate the desired amount of shared memory
     int carveout = (int) 100.0 * PERCENTAGE_SHARED;
