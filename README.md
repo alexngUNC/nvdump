@@ -13,7 +13,7 @@ Supported by CUDA 11+
 /usr/local/cuda/bin/nvcc vecAdd.cu -lcuda -I/usr/local/cuda/include -ldl -o vecAdd
 
 ### Example
-#define NVC7C0_QMDV02_03_SHARED_MEMORY_SIZE                        MW(561:544)
-./start
-Starting bit number: 544
-Field size: 18
+#define NVC7C0_QMDV02_03_SHARED_MEMORY_SIZE                        MW(561:544)  
+./start  
+Starting bit number: 544  
+Field size: 18  
