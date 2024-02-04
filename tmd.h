@@ -38,7 +38,7 @@ static void launchCallback(void *ukwn, int domain, int cbid, const void *in_para
     // contains a pointer to the TMD as its first element. Note that this eighth
     // pointer must exist---it only exists when the first 8-byte element of
     // `in_params` is at least 0x50 (checked above).
-    void* tmd = **((uintptr_t***)in_params + 8);
+    char* tmd = (char*) (**((uintptr_t***)in_params + 8));
     if (!tmd)
         abort(1, 0, "TMD allocation appears NULL; likely forward-compatibilty issue.\n");
 
