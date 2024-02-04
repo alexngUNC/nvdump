@@ -66,7 +66,10 @@ int main() {
 
     if (child_pid == 0) {
         // Execute the child TMD printing process
-        if (execvp("./start", NULL) == -1) {
+        char* startArgs[2];
+        startArgs[0] = "start";
+        startArgs[1] = NULL;
+        if (execvp("./start", startArgs) == -1) {
             perror("execvp");
             exit(EXIT_FAILURE);
         }
