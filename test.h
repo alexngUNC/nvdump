@@ -155,7 +155,7 @@ void set_bit_index(uint64_t bit_index) {
     g_bit_index = bit_index;
 }
 
-static void print_tmd_fields(uint64_t bit_index) {
+static void print_tmd_field(uint64_t bit_index) {
     int (*subscribe)(uint32_t* hndl, void(*callback)(void*, int, int, const void*), void* ukwn);
     int (*enable)(uint32_t enable, uint32_t hndl, int domain, int cbid);
     uintptr_t* tbl_base;
