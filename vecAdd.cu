@@ -6,7 +6,7 @@
 #include <unistd.h>
 #define PERCENTAGE_SHARED 1
 
-// Global pointer to payload
+// Global pointer to payload for TMD field
 uint64_t* p_payload = NULL;
 uint64_t payload;
 
