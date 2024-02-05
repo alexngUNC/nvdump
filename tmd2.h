@@ -30,12 +30,6 @@ uint64_t g_payload;
 // Check if TMD has been accessed
 bool g_tmd_accessed = false;
 
-// Global TMD pointer
-char tmd_val = 'a';
-char *g_tmd = &tmd_val;
-
-void extractTMDField(void);
-
 static void launchCallback(void *ukwn, int domain, int cbid, const void *in_params) {
     // The third 8-byte element in `in_parms` is a pointer to the stream struct.
     // This exists even when in_params < 0x50. This could be used to implement
@@ -57,8 +51,8 @@ static void launchCallback(void *ukwn, int domain, int cbid, const void *in_para
     //fprintf(stderr, "cta: %lx\n", *(uint64_t*)(tmd + 74));
     // TODO: Check for supported QMD version (>XXX, <4.00)
     // TODO: Support QMD version 4 (Hopper), where offset starts at +304 (rather than +84) and is 16 bytes (rather than 8 bytes) wide. It also requires an enable bit at +31bits.
-    // uint32_t *lower_ptr = (uint32_t *) (tmd + 84);
-    // uint32_t *upper_ptr = (uint32_t *) (tmd + 88);
+    uint32_t *lower_ptr = (uint32_t *) (tmd + 84);
+    uint32_t *upper_ptr = (uint32_t *) (tmd + 88);
 
     //  if (g_next_sm_mask) {
     //      *lower_ptr = (uint32_t)g_next_sm_mask;
@@ -69,112 +63,8 @@ static void launchCallback(void *ukwn, int domain, int cbid, const void *in_para
     //      *lower_ptr = (uint32_t)g_sm_mask;
     //      *upper_ptr = (uint32_t)(g_sm_mask >> 32);
     //  }
-    g_tmd = tmd;
 
-    // Initialize memory to store whatever is at location target
-    uint64_t a = 0;
-    uint64_t* my_ptr = &a;
-
-    // Specify address of target
-    int target = g_bit_index;
-
-    // Specify number of bits that target is
-    int length = g_field_size;
-
-    // Create payload that is only the length of target
-    uint64_t payload = g_payload;
-
-    // Find the closest multiple of 8 <= target
-    int floor = (target / 8) * 8;
-
-    // Find offset in size of 8-bits
-    int offset = (int) floor / 8;
-
-    // Grab 64 bits starting at floor
-    //uint64_t* target_addr = ((uint64_t*)((uint32_t*)(**((char***)in_params + 8) + offset)));
-    uint64_t* target_addr = (uint64_t*)(tmd + offset);
-    *my_ptr = *((uint64_t*)(tmd + offset));
-    //*my_ptr = *((uint64_t*)((uint32_t*)(**((char***)in_params + 8) + offset)));
-
-    // Shift right until you get the desired starting address
-    int right = target - floor;
-    *my_ptr = (*my_ptr) >> right;
-
-    // Only take the desired number of bits
-    uint64_t desired_bits = 0xFFFFFFFFFFFFFFFF;
-    desired_bits = desired_bits >> (64 - length);
-    *my_ptr = (*my_ptr) & desired_bits;
-
-    // Print value before modifying
-    fprintf(stdout, "Previous value: %lu\n", *my_ptr);
-    fprintf(stdout, "target_addr: %p\t*target_addr: %lx\n", target_addr, *target_addr);
-
-    // Payload of 64-bits; need to preserve left and right segments
-    // that are not to be modified
-    uint64_t full_payload = 0;
-
-    // Find number of bits to keep on left of target
-    int left = 64 - (length + right);
-    printf("left: %u\tright: %u\n", left, right);
-
-    // Preserve left segment
-    uint64_t left_bits = 0xFFFFFFFFFFFFFFFF;
-    if (left > 0) {
-        left_bits = (left_bits >> (length + right));
-        left_bits <<= (length + right);
-        full_payload = (*target_addr) & left_bits;
-    }
-
-    // Preserve bits to the right of target
-    uint64_t right_part;
-    uint64_t right_bits = 0xFFFFFFFFFFFFFFFF;
-    if (right > 0) {
-        right_bits = right_bits >> (left + length);
-        right_part = (*target_addr) & right_bits;
-    } else {
-        right_part = 0;
-    }
-    full_payload |= right_part;
-
-    // Shift payload to the left
-    payload = payload << right;
-
-    // Put payload in middle of full 64-bit value
-    full_payload |= payload;
-
-    // Modify value at target_addr
-    *target_addr = full_payload;
-
-    // Print what is stored at bit number target
-    //fprintf(stdout, "lower_ptr: %p\t *lower_ptr: %u\n", lower_ptr, *lower_ptr);
-    //fprintf(stdout, "upper_ptr: %p\t *upper_ptr: %u\n", upper_ptr, *upper_ptr);
-
-    // Currently just prints 64 bits at target address
-    // *my_ptr = *((uint64_t*)((uint32_t*)(**((char***)in_params + 8) + offset)));
-    *my_ptr = *((uint64_t*)(tmd + offset));
-
-    // Shift right until you get the desired starting address
-    *my_ptr = (*my_ptr) >> right;
-
-    // Only take the desired number of bits
-    desired_bits = 0xFFFFFFFFFFFFFFFF  >> (64 - length);
-    *my_ptr = (*my_ptr) & desired_bits;
-
-    // Print segments
-    fprintf(stdout, "Right part: %lx\n", right_part);
-    fprintf(stdout, "Full payload: %lx\n", full_payload);
-
-    // Print only the target value
-    fprintf(stdout, "target_addr: %p\t*target_addr: %lx\n", target_addr, *target_addr);
-    fprintf(stdout, "Modified value: %lu\n", *my_ptr);
-
-}
-
-void extractTMDField(void) {
     // ---------- Added by Alex ----------
-    // Set TMD pointer
-    char *tmd = g_tmd;
-
     // Initialize memory to store whatever is at location target
     uint64_t a = 0;
     uint64_t* my_ptr = &a;
@@ -195,10 +85,8 @@ void extractTMDField(void) {
     int offset = (int) floor / 8;
 
     // Grab 64 bits starting at floor
-    //uint64_t* target_addr = ((uint64_t*)((uint32_t*)(**((char***)in_params + 8) + offset)));
-    uint64_t* target_addr = (uint64_t*)(tmd + offset);
-    *my_ptr = *((uint64_t*)(tmd + offset));
-    //*my_ptr = *((uint64_t*)((uint32_t*)(**((char***)in_params + 8) + offset)));
+    uint64_t* target_addr = ((uint64_t*)((uint32_t*)(**((char***)in_params + 8) + offset)));
+    *my_ptr = *((uint64_t*)((uint32_t*)(**((char***)in_params + 8) + offset)));
 
     // Shift right until you get the desired starting address
     int right = target - floor;
@@ -250,12 +138,11 @@ void extractTMDField(void) {
     *target_addr = full_payload;
 
     // Print what is stored at bit number target
-    //fprintf(stdout, "lower_ptr: %p\t *lower_ptr: %u\n", lower_ptr, *lower_ptr);
-    //fprintf(stdout, "upper_ptr: %p\t *upper_ptr: %u\n", upper_ptr, *upper_ptr);
+    fprintf(stdout, "lower_ptr: %p\t *lower_ptr: %u\n", lower_ptr, *lower_ptr);
+    fprintf(stdout, "upper_ptr: %p\t *upper_ptr: %u\n", upper_ptr, *upper_ptr);
 
     // Currently just prints 64 bits at target address
-    // *my_ptr = *((uint64_t*)((uint32_t*)(**((char***)in_params + 8) + offset)));
-    *my_ptr = *((uint64_t*)(tmd + offset));
+    *my_ptr = *((uint64_t*)((uint32_t*)(**((char***)in_params + 8) + offset)));
 
     // Shift right until you get the desired starting address
     *my_ptr = (*my_ptr) >> right;
@@ -287,6 +174,9 @@ static void print_tmd_field(uint64_t bit_index, uint64_t bit_length, uint64_t* p
     int (*enable)(uint32_t enable, uint32_t hndl, int domain, int cbid);
     uintptr_t* tbl_base;
     uint32_t my_hndl;
+    // Avoid race conditions (setup can only be called once)
+    if (__atomic_test_and_set(&print_tmd_field_called, __ATOMIC_SEQ_CST))
+        return;
     
     // Check if TMD field should be changed
     if (p_payload != NULL)
@@ -296,26 +186,16 @@ static void print_tmd_field(uint64_t bit_index, uint64_t bit_length, uint64_t* p
     set_bit_index(bit_index);
     set_field_size(bit_length);
 
-    // Avoid race conditions (setup can only be called once)
-    //if (__atomic_test_and_set(&print_tmd_field_called, __ATOMIC_SEQ_CST))
-    //    extractTMDField();
-    //    return;
-    
     cuGetExportTable((const void**)&tbl_base, &callback_funcs_id);
     uintptr_t subscribe_func_addr = *(tbl_base + 3);
     uintptr_t enable_func_addr = *(tbl_base + 6);
     subscribe = (typeof(subscribe))subscribe_func_addr;
     enable = (typeof(enable))enable_func_addr;
     int res = 0;
-    if (print_tmd_field_called == 0) {
-        print_tmd_field_called = 1;
-        res = subscribe(&my_hndl, launchCallback, NULL);
-        if (res)
-            abort(1, 0, "Error subscribing to launch callback. CUDA returned error code %d.", res);
-        res = enable(1, my_hndl, LAUNCH_DOMAIN, LAUNCH_PRE_UPLOAD);
-        if (res)
-            abort(1, 0, "Error enabling launch callback. CUDA returned error code %d.", res);
-    } else {
-        extractTMDField();
-    }
+    res = subscribe(&my_hndl, launchCallback, NULL);
+    if (res)
+        abort(1, 0, "Error subscribing to launch callback. CUDA returned error code %d.", res);
+    res = enable(1, my_hndl, LAUNCH_DOMAIN, LAUNCH_PRE_UPLOAD);
+    if (res)
+        abort(1, 0, "Error enabling launch callback. CUDA returned error code %d.", res);
 }

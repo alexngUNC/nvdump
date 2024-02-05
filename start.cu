@@ -17,34 +17,35 @@ main(void)
     uint64_t userValue;
     uint64_t fieldSize;
 
-    // Prompt the user for input
-    printf("Enter TMD field starting bit number: ");
-
-    // Read user input
-    if (scanf("%" SCNu64, &userValue) != 1) {
-        printf("Invalid input. Please enter a valid 64-bit unsigned integer.\n");
-        return 1;
-    }
-
-    printf("Enter TMD field size in bits: ");
+    prompt:
+        // Prompt the user for input
+        printf("Enter TMD field starting bit number: ");
     
-    if (scanf("%" SCNu64, &fieldSize) != 1) {
-        printf("Invalid input. Please enter a valid 64-bit unsigned integer.\n");
-        return 1;
-    } 
-
-    // Check if the user wants to modify the value of the TMD field
-    getchar();
-
-    char input[20];
-
-    printf("Enter a uint64_t value: ");
-    if (fgets(input, sizeof(input), stdin) == NULL) {
-        // Handle error or end-of-file condition
-        fprintf(stderr, "Error reading input\n");
-        return 1;
-    }
-
+        // Read user input
+        if (scanf("%" SCNu64, &userValue) != 1) {
+            printf("Invalid input. Please enter a valid 64-bit unsigned integer.\n");
+            return 1;
+        }
+    
+        printf("Enter TMD field size in bits: ");
+        
+        if (scanf("%" SCNu64, &fieldSize) != 1) {
+            printf("Invalid input. Please enter a valid 64-bit unsigned integer.\n");
+            return 1;
+        } 
+    
+        // Check if the user wants to modify the value of the TMD field
+        getchar();
+    
+        char input[20];
+    
+        printf("Enter a uint64_t value: ");
+        if (fgets(input, sizeof(input), stdin) == NULL) {
+            // Handle error or end-of-file condition
+            fprintf(stderr, "Error reading input\n");
+            return 1;
+        }
+    
     if (input[0] == '\n') {
         printf("Value will not be modified\n");
 
@@ -69,6 +70,8 @@ main(void)
     }
 
     trigger_callback<<<1,1>>>();
+    cudaDeviceSynchronize();
+    goto prompt;
 
     return 0;
 }
