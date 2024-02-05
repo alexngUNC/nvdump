@@ -6,6 +6,9 @@
 #include <unistd.h>
 #define PERCENTAGE_SHARED 1
 
+// Global pointer to payload
+uint64_t* p_payload = NULL;
+uint64_t payload;
 
 __global__ void vecAdd(int* x, int* y, int n) {
     int i = threadIdx.x + blockIdx.x * blockDim.x;
@@ -76,12 +79,46 @@ int main() {
         return 1;
     } 
 
+    getchar();
+
+    char input[20];
+
+    printf("Enter a uint64_t value: ");
+    if (fgets(input, sizeof(input), stdin) == NULL) {
+        // Handle error or end-of-file condition
+        fprintf(stderr, "Error reading input\n");
+        return 1;
+    }
+
     // Partition the L1 cache to allocate the desired amount of shared memory
     int carveout = (int) 100.0 * PERCENTAGE_SHARED;
     SAFE(cudaFuncSetAttribute(vecAdd, cudaFuncAttributePreferredSharedMemoryCarveout, carveout));
 
-    // Print TMD field
-    print_tmd_field(userValue, fieldSize);
+    // Check if the user wants to modify the TMD field
+    if (input[0] == '\n') {
+        printf("Value will not be modified\n");
+
+        // Print TMD field
+        print_tmd_field(userValue, fieldSize, NULL);
+    } else {
+        printf("Value will be modified\n");
+
+        // Convert the input to uint64_t
+        char *endptr;
+        payload = strtoull(input, &endptr, 10);
+        p_payload = &payload;
+
+        // Check for conversion errors
+        if (*endptr != '\0' && *endptr != '\n') {
+            fprintf(stderr, "Invalid input. Please enter a valid uint64_t.\n");
+            return 1;
+        }
+
+        // Print TMD field
+        print_tmd_field(userValue, fieldSize, p_payload);
+    }
+
+
 
     // Launch vector addition kernel
     vecAdd<<<8, 1024, n*sizeof(int)>>>(d_x, d_y, n);

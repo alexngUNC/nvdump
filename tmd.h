@@ -24,6 +24,12 @@ uint64_t g_bit_index;
 // Global field size in bits
 uint64_t g_field_size;
 
+// Global payload to change target field to
+uint64_t g_payload;
+
+// Check if TMD has been accessed
+bool g_tmd_accessed = false;
+
 static void launchCallback(void *ukwn, int domain, int cbid, const void *in_params) {
     // The third 8-byte element in `in_parms` is a pointer to the stream struct.
     // This exists even when in_params < 0x50. This could be used to implement
@@ -70,7 +76,7 @@ static void launchCallback(void *ukwn, int domain, int cbid, const void *in_para
     int length = g_field_size;
 
     // Create payload that is only the length of target
-    uint64_t payload = 49152;
+    uint64_t payload = g_payload;
 
     // Find the closest multiple of 8 <= target
     int floor = (target / 8) * 8;
@@ -129,7 +135,7 @@ static void launchCallback(void *ukwn, int domain, int cbid, const void *in_para
     full_payload |= payload;
 
     // Modify value at target_addr
-    // *target_addr = full_payload;
+    *target_addr = full_payload;
 
     // Print what is stored at bit number target
     fprintf(stdout, "lower_ptr: %p\t *lower_ptr: %u\n", lower_ptr, *lower_ptr);
@@ -162,7 +168,7 @@ void set_field_size(uint64_t bit_length) {
     g_field_size = bit_length;
 }
 
-static void print_tmd_field(uint64_t bit_index, uint64_t bit_length) {
+static void print_tmd_field(uint64_t bit_index, uint64_t bit_length, uint64_t* p_payload) {
     int (*subscribe)(uint32_t* hndl, void(*callback)(void*, int, int, const void*), void* ukwn);
     int (*enable)(uint32_t enable, uint32_t hndl, int domain, int cbid);
     uintptr_t* tbl_base;
@@ -170,7 +176,11 @@ static void print_tmd_field(uint64_t bit_index, uint64_t bit_length) {
     // Avoid race conditions (setup can only be called once)
     //if (__atomic_test_and_set(&sm_control_setup_called, __ATOMIC_SEQ_CST))
     //    return;
-
+    
+    // Check if TMD field should be changed
+    if (p_payload != NULL)
+        g_payload = *p_payload;
+        
     // Set the global bit index
     set_bit_index(bit_index);
     set_field_size(bit_length);
