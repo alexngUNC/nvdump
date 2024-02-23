@@ -28,7 +28,7 @@ uint64_t g_field_size;
 uint64_t g_payload;
 
 // Check if TMD has been accessed
-bool g_tmd_accessed = false;
+int g_tmd_accessed = 0;
 
 // Global TMD pointer
 char tmd_val = 'a';
@@ -167,7 +167,9 @@ static void launchCallback(void *ukwn, int domain, int cbid, const void *in_para
     // Print only the target value
     fprintf(stdout, "target_addr: %p\t*target_addr: %lx\n", target_addr, *target_addr);
     fprintf(stdout, "Modified value: %lu\n", *my_ptr);
-
+    
+    // Set the TMD as accessed
+    g_tmd_accessed = 1;
 }
 
 void extractTMDField(void) {
@@ -288,9 +290,6 @@ static void print_tmd_field(uint64_t bit_index, uint64_t bit_length, uint64_t* p
     uintptr_t* tbl_base;
     uint32_t my_hndl;
     
-    // Check if TMD field should be changed
-    if (p_payload != NULL)
-        g_payload = *p_payload;
         
     // Set the global bit index
     set_bit_index(bit_index);
@@ -309,6 +308,10 @@ static void print_tmd_field(uint64_t bit_index, uint64_t bit_length, uint64_t* p
     int res = 0;
     if (print_tmd_field_called == 0) {
         print_tmd_field_called = 1;
+        // Check if TMD field should be changed
+        if (p_payload != NULL) {
+            g_payload = *p_payload;
+        }
         res = subscribe(&my_hndl, launchCallback, NULL);
         if (res)
             abort(1, 0, "Error subscribing to launch callback. CUDA returned error code %d.", res);
