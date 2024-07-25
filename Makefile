@@ -19,5 +19,8 @@ l1: l1.cu
 l1prompt: l1prompt.cu
 	$(NVCC) l1prompt.cu $(LDFLAGS) -o bin/l1prompt -g
 
+l1args: l1args.cu
+	$(NVCC) l1args.cu $(LDFLAGS) -o bin/l1args -g
+
 clean:
 	rm -rf bin/*
