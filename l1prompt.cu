@@ -21,14 +21,14 @@ __global__ void vecInc(float *a, int *flag) {
 int
 main() {
     // User will input their bit index
-    uint64_t userValue;
+    uint64_t startingBit;
     uint64_t fieldSize;
 
     // Prompt the user for input
     printf("Enter TMD field starting bit number: ");
 
     // Read user input
-    if (scanf("%" SCNu64, &userValue) != 1) {
+    if (scanf("%" SCNu64, &startingBit) != 1) {
         printf("Invalid input. Please enter a valid 64-bit unsigned integer.\n");
         return 1;
     }
@@ -75,7 +75,7 @@ main() {
 	// launch kernel
     if (input[0] == '\n') {
         printf("Value will not be modified\n");
-	    extract_tmd_field(544, 18, NULL);
+	    extract_tmd_field(startingBit, fieldSize, NULL);
     } else {
         char *endptr;
         uint64_t payload = strtoull(input, &endptr, 10);
