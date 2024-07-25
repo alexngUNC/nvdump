@@ -2,7 +2,7 @@
 #include <stdint.h>
 #include <stdio.h>
 #include "testbench.h"
-#include "tmd.h"
+#include "tmdOld.h"
 #include <unistd.h>
 #define PERCENTAGE_SHARED 1
 
